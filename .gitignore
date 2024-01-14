@@ -2,3 +2,4 @@ data/raw/*
 data/processed/*
 data/interim/*
 data/external/*
+__pycache__/
