@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from tests.test_resnet import test_resnet
 
 class block(nn.Module):
     def __init__(self, in_channels, out_channels, identity_downsample=None, stride=1):
@@ -49,7 +49,7 @@ class block(nn.Module):
         if self.identity_downsample is not None:
             identity = self.identity_downsample(x)
 
-        out += torch.nn.functional.interpolate(identity, size=(28, 28))
+        out += torch.nn.functional.interpolate(identity, size=(28,28))
         out = self.relu(out)
 
         return out
@@ -127,25 +127,11 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
 
-def ResNet50(img_channels=3, num_classes=1000):
+def ResNet50(img_channels=3, num_classes=1000, ):
     return ResNet(block, [3, 4, 6, 3], img_channels, num_classes)
 
 
-def test():
-    BATCH_SIZE = 32
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    net = ResNet50(img_channels=3, num_classes=1000).to(device)
-    x = torch.randn(BATCH_SIZE, 3, 96, 112)
-    # If the image size is aXb  then we will have to pass a/4,b/4 in forward method of the block class
-    # out += torch.nn.functional.interpolate(identity, size=(a/4, b/4))
-    # out = self.relu(out)
-
-    # return out
-    x = x.to(device)
-    y = net(x).to(device)
-    assert y.size() == torch.Size([BATCH_SIZE, 1000])
-    print(y.shape)
-
 
 if __name__ == "__main__":
-    print("passed")
+    if test_resnet(ResNet50):
+        print("passed")
