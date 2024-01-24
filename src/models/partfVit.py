@@ -18,23 +18,23 @@ def extract_landmarks_from_image(batch, landmarks, patch_size):
     batch : torch.Tensor
             Batch of images with shape (batch_size, channels, height, width)
     landmarks : torch.Tensor
-            Batch of landmarks with flattened co-ordinates of shape (batch_size, 2 * n_landmarks)
+            Batch of landmarks with flattened co-ordinates of shape (batch_size, 2 * num_landmarks)
     patch_size : list
             Size of patches to extract of form [height, width]
 
     Returns
     -------
     patches : torch.Tensor
-            Batch of patchs with shaepe (batch_size, n_landmarks, channels, height, width))
+            Batch of patchs with shaepe (batch_size, num_landmarks, channels, height, width))
     """
 
-    n_landmarks = landmarks.shape[1] // 2
+    num_landmarks = landmarks.shape[1] // 2
     batch_size, channels, image_height, image_width = batch.shape
     patch_height, patch_width = patch_size
 
     landmarks = landmarks.view(
-        batch_size, n_landmarks, 2
-    )  # Reshaping landmarks to (batch_size, n_landmarks, 2)
+        batch_size, num_landmarks, 2
+    )  # Reshaping landmarks to (batch_size, num_landmarks, 2)
 
     patch_range = [
         [-patch_size[0] / 2, patch_size[0] / 2],
@@ -52,7 +52,7 @@ def extract_landmarks_from_image(batch, landmarks, patch_size):
     )  # shape: (patch_height, patch_width, 2)
     list_patches = []
 
-    for i in range(n_landmarks):
+    for i in range(num_landmarks):
         land = landmarks[:, i, :]
         patch_grid = (land[:, None, None, :] + sampling_grid[None, :, :, :]) / (
             0.5
@@ -68,8 +68,11 @@ def extract_landmarks_from_image(batch, landmarks, patch_size):
 
 
 class part_fVit_with_landmark(nn.Module):
-    def __init__(self, num_landmarks=49, patch_size=28, in_channels=3):
+    def __init__(self, num_landmarks=49, patch_size=28, in_channels=3, image_size=112):
         super().__init__()
+        self.num_landmarks = num_landmarks
+        self.image_size = image_size
+        self.eps = 1e-10
 
         self.backbone = ResNet50(
             img_channels=in_channels, num_classes=2 * num_landmarks
@@ -78,12 +81,25 @@ class part_fVit_with_landmark(nn.Module):
 
     def forward(self, batch):
         landmarks = self.backbone(batch)
-        # batch = extract_landmarks_from_image(
-        #     batch=batch,
-        #     landmarks=landmarks,
-        #     patch_size=[self.patch_size, self.patch_size],
-        # )
-        print(batch.shape)
+
+        temp_max = torch.max(landmarks, dim=1)[0]
+        temp_max = torch.unsqueeze(temp_max, dim=1).repeat([1, 2 * self.num_landmarks])
+
+        temp_min = torch.min(landmarks, dim=1)[0]
+        temp_min = torch.unsqueeze(temp_min, dim=1).repeat([1, 2 * self.num_landmarks])
+
+        landmarks = (
+            (landmarks - temp_min)
+            / (temp_max - temp_min + self.eps)
+            * (self.image_size - 1)
+        )
+
+        batch = extract_landmarks_from_image(
+            batch=batch,
+            landmarks=landmarks,
+            patch_size=[self.patch_size, self.patch_size],
+        )
+        return batch
 
 
 def display_images(tensor):
@@ -102,13 +118,20 @@ def display_images(tensor):
     plt.show()
 
 
-if __name__ == "__main__":
+def main():
     print("testing script")
-    dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=2)
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
-    model = part_fVit_with_landmark()
+    dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=8)
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
+    model = part_fVit_with_landmark(num_landmarks=4)
 
     for batch in dataloader:
         images, labels = batch
         output = model(images)
+        with torch.no_grad():
+            display_images(output[0])
+        print(output.shape)
         break
+
+
+if __name__ == "__main__":
+    main()
