@@ -10,7 +10,7 @@ from src.data.data_loader import DigiFace
 from src.models.resnet50 import ResNet50
 from src.models.transformer import Transformer
 from src.utils.pytorch_utils import extract_landmarks_from_image
-
+from src.losses.cosface import CosFaceLoss
 
 
 class part_fVit_with_landmark(nn.Module):
@@ -91,24 +91,33 @@ class part_fVit_with_landmark(nn.Module):
         z0 = torch.cat((cls_tokens, batch), dim=1)
 
         z0 += self.pos_embedding
+        output = self.layers(z0)[:, 0, :]
 
-        zL = self.layers(z0)
+        return output
 
-        return zL
 
 def main():
     print("testing script")
     dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=8)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
     model = part_fVit_with_landmark(num_landmarks=5, num_classes=dataset.num_identities)
+    criterion = CosFaceLoss(
+        num_classes=dataset.num_identities,
+        feat_dim=768,
+        margin=0.35,
+    )
+
+    optim = torch.optim.SGD(model.parameters(), lr=0.1)
 
     for batch in dataloader:
+        optim.zero_grad()
         images, labels = batch
         output = model(images)
-        # with torch.no_grad():
-        #   display_images(output[0])
-        print(output.shape)
-        break
+        labels = labels.view(-1, 1)
+        loss = criterion(output, labels)
+        loss.backward()
+        optim.step()
+        print(loss)
 
 
 if __name__ == "__main__":
