@@ -21,14 +21,14 @@ class part_fVit_with_landmark(nn.Module):
         image_size=112,
         feat_dim=768,
         mlp_dim=2048,
-        num_heads=11,
-        num_layers=12,
-        dropout=0.0,
+        num_heads=8,
+        num_layers=6,
+        dropout=0.2,
     ):
         super().__init__()
         self.num_landmarks = num_landmarks
         self.image_size = image_size
-        self.eps = 1e-05
+        self.eps = 5e-04
         self.patch_dim = in_channels * patch_size * patch_size
         self.feat_dim = feat_dim
         self.mlp_dim = mlp_dim
