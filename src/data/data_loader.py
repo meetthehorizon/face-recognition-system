@@ -18,6 +18,7 @@ class DigiFace(Dataset):
         self.path = path
         self.transform = transform
         self.identities = os.listdir(path)
+        self.num_identities = (len(self.identities))
         self.samples = self._generate_samples(num_images=num_images)
 
     def __getitem__(self, index):

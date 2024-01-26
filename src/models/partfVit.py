@@ -12,29 +12,32 @@ from src.models.transformer import Transformer
 from src.utils.pytorch_utils import extract_landmarks_from_image
 
 
+
 class part_fVit_with_landmark(nn.Module):
     def __init__(
         self,
+        num_classes,
         num_landmarks=49,
         patch_size=28,
         in_channels=3,
         image_size=112,
         feat_dim=768,
         mlp_dim=2048,
-        num_heads=8,
-        num_layers=6,
-        dropout=0.2,
+        num_heads=12,
+        num_layers=12,
+        dropout=0.0,
     ):
         super().__init__()
         self.num_landmarks = num_landmarks
         self.image_size = image_size
-        self.eps = 5e-04
+        self.eps = 1e-05
         self.patch_dim = in_channels * patch_size * patch_size
         self.feat_dim = feat_dim
         self.mlp_dim = mlp_dim
         self.num_heads = num_heads
         self.num_layers = num_layers
         self.dropout = dropout
+        self.num_classes = num_classes
 
         self.backbone = ResNet50(
             img_channels=in_channels, num_classes=2 * num_landmarks
@@ -49,6 +52,14 @@ class part_fVit_with_landmark(nn.Module):
             nn.LayerNorm(self.patch_dim),
             nn.Linear(self.patch_dim, self.feat_dim),
             nn.LayerNorm(self.feat_dim),
+        )
+
+        self.layers = Transformer(
+            feat_dim=self.feat_dim,
+            mlp_dim=self.mlp_dim,
+            num_heads=self.num_heads,
+            num_layers=self.num_layers,
+            dropout=self.dropout,
         )
 
     def forward(self, batch):
@@ -81,14 +92,15 @@ class part_fVit_with_landmark(nn.Module):
 
         z0 += self.pos_embedding
 
-        return z0
+        zL = self.layers(z0)
 
+        return zL
 
 def main():
     print("testing script")
     dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=8)
     dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    model = part_fVit_with_landmark(num_landmarks=5)
+    model = part_fVit_with_landmark(num_landmarks=5, num_classes=dataset.num_identities)
 
     for batch in dataloader:
         images, labels = batch
