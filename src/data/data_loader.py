@@ -5,7 +5,7 @@ from PIL import Image
 
 
 class DigiFace(Dataset):
-    def __init__(self, path="data/raw", transform=None, num_images=None):
+    def __init__(self, path="data/raw", transform=None, num_identities=None):
         """DigiFace dataset
 
         Parameters
@@ -18,8 +18,8 @@ class DigiFace(Dataset):
         self.path = path
         self.transform = transform
         self.identities = os.listdir(path)
-        self.num_identities = (len(self.identities))
-        self.samples = self._generate_samples(num_images=num_images)
+        self.num_identities = num_identities
+        self.samples = self._generate_samples(num_identities=num_identities)
 
     def __getitem__(self, index):
         """Load image and mask at index."""
@@ -34,19 +34,18 @@ class DigiFace(Dataset):
 
         return image, int(identity)
 
-    def _generate_samples(self, num_images):
+    def _generate_samples(self, num_identities):
         """Generate sample from dataset."""
         samples = []
         for identity in self.identities:
             identity_path = os.path.join(self.path, identity)
+            if num_identities:
+                identity_path = identity_path[:num_identities]
             images_path = os.listdir(identity_path)
 
             for image_path in images_path:
                 image_path = os.path.join(identity_path, image_path)
                 samples.append((identity, image_path))
-
-        if num_images:
-            samples = samples[:num_images]
 
         return samples
 

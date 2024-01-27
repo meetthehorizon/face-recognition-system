@@ -10,9 +10,15 @@ To do:
 - [x] CosFaceloss
 - [x] Finish partfViT Model
 - [x] Dataloader
-- [ ] Parameters!! (Experiments kaunse run krne hai)
-- [ ] Config.yaml
+- [x] Parameters!! (Experiments kaunse run krne hai)
+- [x] Config.yaml
 - [ ] Modular Code
 - [ ] Device implementation of MutliHeadAttention and other functions
 - [ ] Train model
 - [ ] Docmentation
+
+Temp To do:
+- [ ] test scripts
+- [ ] metrics 
+- [ ] train & evaluation & test
+- [ ] exp wala bkc
