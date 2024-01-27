@@ -4,20 +4,44 @@ import torch.nn.functional as F
 
 
 class block(nn.Module):
+    """Basic block of the ResNet50 architecture that repeats itself multiple times
+        refer: https://arxiv.org/pdf/1512.03385.pdf
+        Attributes
+        ----------
+            in_channels: int
+                        number of input channels
+            out_channels: int
+                        number of output channels
+            identity_downsample: np.ndarray
+                        identity downsample layer
+            stride: int
+                        stride of the convolutional layer
+        """
     def __init__(self, in_channels, out_channels, identity_downsample=None, stride=1):
+        """
+        Parameters
+        ----------
+            in_channels: int
+                        The number of input channels
+            out_channels: int
+                        The number of output channels
+            identity_downsample: np.ndarray
+                        The identity downsample layer
+            stride: int
+                        The stride of the convolutional layer
+        """
         super(block, self).__init__()
-        self.expansion = 4
-        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        self.expansion = 4 # This is the expansion factor
 
         # Initialising the common layers used in the network
         self.conv1 = nn.Conv2d(
             in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False
-        )
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        ) # Since we are using 1*1 kernel size the padding is 0
+        self.bn1 = nn.BatchNorm2d(out_channels) # Batch Normalization
         self.conv2 = nn.Conv2d(
             out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
-        )
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        ) # Since we are using 3*3 kernel size the padding is 1
+        self.bn2 = nn.BatchNorm2d(out_channels) 
         self.conv3 = nn.Conv2d(
             out_channels,
             out_channels * self.expansion,
@@ -25,15 +49,27 @@ class block(nn.Module):
             stride=1,
             padding=0,
             bias=False,
-        )
+        ) # Here the output channels are multiplied by the expansion factor
         self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
-        self.relu = nn.ReLU()
-        self.identity_downsample = identity_downsample
+        self.relu = nn.ReLU() 
+        self.identity_downsample = identity_downsample 
         self.stride = stride
 
     # Forward Function in order to pass the given input through the block
     def forward(self, x):
-        identity = x
+        """Computes the forward pass of the block
+        
+        Parameters
+        ----------
+            x: torch.Tensor
+                The input tensor
+            
+        Returns
+        -------
+            torch.Tensor
+                The output tensor
+        """
+        identity = x 
 
         out = self.conv1(x)
         out = self.bn1(out)
