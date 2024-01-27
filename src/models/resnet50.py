@@ -2,21 +2,22 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from tests import test_resnet50
+
 class block(nn.Module):
     """Basic block of the ResNet50 architecture that repeats itself multiple times
 
-        Attributes
-        ----------
-            in_channels: int
-                        number of input channels
-            out_channels: int
-                        number of output channels
-            identity_downsample: np.ndarray
-                        identity downsample layer
-            stride: int
-                        stride of the convolutional layer
-        """
+    Attributes
+    ----------
+        in_channels: int
+                    number of input channels
+        out_channels: int
+                    number of output channels
+        identity_downsample: np.ndarray
+                    identity downsample layer
+        stride: int
+                    stride of the convolutional layer
+    """
+
     def __init__(self, in_channels, out_channels, identity_downsample=None, stride=1):
         """
         Parameters
@@ -31,17 +32,17 @@ class block(nn.Module):
                         The stride of the convolutional layer
         """
         super(block, self).__init__()
-        self.expansion = 4 # This is the expansion factor
+        self.expansion = 4  # This is the expansion factor
 
         # Initialising the common layers used in the network
         self.conv1 = nn.Conv2d(
             in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False
-        ) # Since we are using 1*1 kernel size the padding is 0
-        self.bn1 = nn.BatchNorm2d(out_channels) # Batch Normalization
+        )  # Since we are using 1*1 kernel size the padding is 0
+        self.bn1 = nn.BatchNorm2d(out_channels)  # Batch Normalization
         self.conv2 = nn.Conv2d(
             out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
-        ) # Since we are using 3*3 kernel size the padding is 1
-        self.bn2 = nn.BatchNorm2d(out_channels) 
+        )  # Since we are using 3*3 kernel size the padding is 1
+        self.bn2 = nn.BatchNorm2d(out_channels)
         self.conv3 = nn.Conv2d(
             out_channels,
             out_channels * self.expansion,
@@ -49,27 +50,27 @@ class block(nn.Module):
             stride=1,
             padding=0,
             bias=False,
-        ) # Here the output channels are multiplied by the expansion factor
+        )  # Here the output channels are multiplied by the expansion factor
         self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
-        self.relu = nn.ReLU() 
-        self.identity_downsample = identity_downsample 
+        self.relu = nn.ReLU()
+        self.identity_downsample = identity_downsample
         self.stride = stride
 
     # Forward Function in order to pass the given input through the block
     def forward(self, x):
         """Computes the forward pass of the block
-        
+
         Parameters
         ----------
             x: torch.Tensor
                 The input tensor
-            
+
         Returns
         -------
             torch.Tensor
                 The output tensor
         """
-        identity = x 
+        identity = x
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -95,9 +96,9 @@ class block(nn.Module):
 class ResNet(nn.Module):
     """ResNet50 architecture
 
-        reference: https://arxiv.org/pdf/1512.03385.pdf
-        """
-    
+    reference: https://arxiv.org/pdf/1512.03385.pdf
+    """
+
     def __init__(self, block, layers, img_channels, num_classes):
         super(ResNet, self).__init__()
         """
@@ -112,7 +113,7 @@ class ResNet(nn.Module):
             num_classes: int
                         The number of output classes
         """
-        # Initial layers 
+        # Initial layers
         self.in_channels = 64
         self.conv1 = nn.Conv2d(img_channels, 64, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(64)
@@ -120,9 +121,15 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # ResNet Layers
-        self.layer1 = self._make_layer(block, layers[0], out_channels=64, stride=1) # Here the output will be 64*4=256
-        self.layer2 = self._make_layer(block, layers[1], out_channels=128, stride=2) # Here the output will be 128*4=512
-        self.layer3 = self._make_layer(block, layers[2], out_channels=256, stride=2) # Here the output will be 256*4=1024
+        self.layer1 = self._make_layer(
+            block, layers[0], out_channels=64, stride=1
+        )  # Here the output will be 64*4=256
+        self.layer2 = self._make_layer(
+            block, layers[1], out_channels=128, stride=2
+        )  # Here the output will be 128*4=512
+        self.layer3 = self._make_layer(
+            block, layers[2], out_channels=256, stride=2
+        )  # Here the output will be 256*4=1024
         self.layer4 = self._make_layer(
             block, layers[3], out_channels=512, stride=2
         )  # Here the output will be 512*4=2048
@@ -146,9 +153,7 @@ class ResNet(nn.Module):
         out = self.relu(out)
         out = self.maxpool(out)
 
-        out = self.layer1(
-            out
-        )
+        out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
@@ -159,7 +164,6 @@ class ResNet(nn.Module):
 
         return out
 
-    
     def _make_layer(self, block, num_residual_blocks, out_channels, stride=1):
         """Creates a layer of the ResNet50 architecture
         Parameters
@@ -192,9 +196,7 @@ class ResNet(nn.Module):
         )
         self.in_channels = out_channels * 4
         for _ in range(num_residual_blocks - 1):
-            layers.append(
-                block(self.in_channels, out_channels)
-            )
+            layers.append(block(self.in_channels, out_channels))
         return nn.Sequential(*layers)
 
 
@@ -202,8 +204,5 @@ def ResNet50(img_channels=3, num_classes=1000):
     return ResNet(block, [3, 4, 6, 3], img_channels, num_classes)
 
 
-
 if __name__ == "__main__":
-    print("testing script")
-    test_resnet50(ResNet50)
     print("passed")

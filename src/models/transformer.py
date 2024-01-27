@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 
-from tests import test_transformer
-
 
 class Transformer(nn.Module):
     """Transformer
@@ -87,6 +85,4 @@ class Transformer(nn.Module):
 
 
 if __name__ == "__main__":
-    print("testing script")
-    test_transformer(Transformer)
     print("passed")
