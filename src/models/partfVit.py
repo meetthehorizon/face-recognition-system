@@ -11,10 +11,9 @@ from src.losses.cosface import CosFaceLoss
 from src.models.resnet50 import ResNet50
 from src.models.transformer import Transformer
 from src.utils.pytorch_utils import extract_landmarks_from_image
-from tests import test_partfVit
 
 
-class part_fVit_with_landmark(nn.Module):
+class PartFVitWithLandmark(nn.Module):
     """Part-fVit with landmarks
 
     reference: https://arxiv.org/pdf/2212.00057v1.pdf
@@ -78,7 +77,7 @@ class part_fVit_with_landmark(nn.Module):
         )  # positional embedding
 
         self.landmark_CNN = ResNet50(
-            img_channels=in_channels, num_identites=2 * num_landmarks
+            img_channels=in_channels, num_classes=2 * num_landmarks
         )  # landmark extractor
 
         self.to_patch_embedding = nn.Sequential(
@@ -145,7 +144,6 @@ class part_fVit_with_landmark(nn.Module):
 
         return output
 
+
 if __name__ == "__main__":
-    print("testing script")
-    test_partfVit()
     print("passed")

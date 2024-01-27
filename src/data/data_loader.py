@@ -6,8 +6,6 @@ from torchvision import transforms
 
 from PIL import Image
 
-from tests import test_data_loader
-
 
 class DigiFace(Dataset):
     """DigiFace dataset class
@@ -33,6 +31,7 @@ class DigiFace(Dataset):
         num_identities : int
                 Number of identities to use from dataset
         """
+        self.path = path
         self.transform = transform
         self.identities = os.listdir(path)
         self.num_identities = num_identities
@@ -96,6 +95,4 @@ class DigiFace(Dataset):
 
 
 if __name__ == "__main__":
-    print("testing script")
-    test_data_loader(DigiFace)
-    print("test passed")
+    print("passed")

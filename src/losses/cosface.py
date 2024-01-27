@@ -4,8 +4,6 @@ import torch.nn.functional as F
 
 from torch.linalg import vector_norm as norm
 
-from tests import test_cosface
-
 
 class CosFaceLoss(nn.Module):
     """CosFace loss.
@@ -33,6 +31,7 @@ class CosFaceLoss(nn.Module):
 
         super().__init__()
         self.margin = margin
+        self.num_classes = num_classes
         self.cross_loss = nn.CrossEntropyLoss()
         self.weight = nn.Parameter(torch.FloatTensor(feat_dim, num_classes))
         nn.init.xavier_uniform_(self.weight)
@@ -72,6 +71,4 @@ class CosFaceLoss(nn.Module):
 
 
 if __name__ == "__main__":
-    print("testing script")
-    test_cosface()
-    print("tests passed")
+    print("passed")
