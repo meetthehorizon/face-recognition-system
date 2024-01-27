@@ -2,22 +2,46 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+from tests import test_resnet50
 class block(nn.Module):
+    """Basic block of the ResNet50 architecture that repeats itself multiple times
+
+        Attributes
+        ----------
+            in_channels: int
+                        number of input channels
+            out_channels: int
+                        number of output channels
+            identity_downsample: np.ndarray
+                        identity downsample layer
+            stride: int
+                        stride of the convolutional layer
+        """
     def __init__(self, in_channels, out_channels, identity_downsample=None, stride=1):
+        """
+        Parameters
+        ----------
+            in_channels: int
+                        The number of input channels
+            out_channels: int
+                        The number of output channels
+            identity_downsample: np.ndarray
+                        The identity downsample layer
+            stride: int
+                        The stride of the convolutional layer
+        """
         super(block, self).__init__()
-        self.expansion = 4
-        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        self.expansion = 4 # This is the expansion factor
 
         # Initialising the common layers used in the network
         self.conv1 = nn.Conv2d(
             in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False
-        )
-        self.bn1 = nn.BatchNorm2d(out_channels)
+        ) # Since we are using 1*1 kernel size the padding is 0
+        self.bn1 = nn.BatchNorm2d(out_channels) # Batch Normalization
         self.conv2 = nn.Conv2d(
             out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
-        )
-        self.bn2 = nn.BatchNorm2d(out_channels)
+        ) # Since we are using 3*3 kernel size the padding is 1
+        self.bn2 = nn.BatchNorm2d(out_channels) 
         self.conv3 = nn.Conv2d(
             out_channels,
             out_channels * self.expansion,
@@ -25,15 +49,27 @@ class block(nn.Module):
             stride=1,
             padding=0,
             bias=False,
-        )
+        ) # Here the output channels are multiplied by the expansion factor
         self.bn3 = nn.BatchNorm2d(out_channels * self.expansion)
-        self.relu = nn.ReLU()
-        self.identity_downsample = identity_downsample
+        self.relu = nn.ReLU() 
+        self.identity_downsample = identity_downsample 
         self.stride = stride
 
     # Forward Function in order to pass the given input through the block
     def forward(self, x):
-        identity = x
+        """Computes the forward pass of the block
+        
+        Parameters
+        ----------
+            x: torch.Tensor
+                The input tensor
+            
+        Returns
+        -------
+            torch.Tensor
+                The output tensor
+        """
+        identity = x 
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -57,15 +93,26 @@ class block(nn.Module):
 
 # Making the resnet model
 class ResNet(nn.Module):
-    # We are going to use the basic block like this: 1. Block used [3,4,6,3]
-    # The parameters are defined as follows:
-    # block: It is the basic block that is going to be used multiple times during our implementation
-    # layers: The number of times we need to use the BasicBlock
+    """ResNet50 architecture
+
+        reference: https://arxiv.org/pdf/1512.03385.pdf
+        """
+    
     def __init__(self, block, layers, img_channels, num_classes):
         super(ResNet, self).__init__()
-
-        # Initializing the initial layers
-        # Note these are not the resnet layers but the initial layers
+        """
+        Parameters
+        ----------
+            block: np.ndarray
+                        The basic block that is going to be used multiple times
+            layers: np.ndarray
+                        The number of times the basic block is going to be used
+            img_channels: int
+                        The number of input channels
+            num_classes: int
+                        The number of output classes
+        """
+        # Initial layers 
         self.in_channels = 64
         self.conv1 = nn.Conv2d(img_channels, 64, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(64)
@@ -73,17 +120,27 @@ class ResNet(nn.Module):
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # ResNet Layers
-        self.layer1 = self._make_layer(block, layers[0], out_channels=64, stride=1)
-        self.layer2 = self._make_layer(block, layers[1], out_channels=128, stride=2)
-        self.layer3 = self._make_layer(block, layers[2], out_channels=256, stride=2)
+        self.layer1 = self._make_layer(block, layers[0], out_channels=64, stride=1) # Here the output will be 64*4=256
+        self.layer2 = self._make_layer(block, layers[1], out_channels=128, stride=2) # Here the output will be 128*4=512
+        self.layer3 = self._make_layer(block, layers[2], out_channels=256, stride=2) # Here the output will be 256*4=1024
         self.layer4 = self._make_layer(
             block, layers[3], out_channels=512, stride=2
-        )  # Now here the output will be 512*4=2048
+        )  # Here the output will be 512*4=2048
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * 4, num_classes)
 
     def forward(self, x):
+        """Computes the forward pass of the ResNet50 architecture
+        Parameters
+        ----------
+            x: torch.Tensor
+                The input tensor
+        Returns
+        -------
+            torch.Tensor
+                The output tensor
+        """
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
@@ -91,7 +148,7 @@ class ResNet(nn.Module):
 
         out = self.layer1(
             out
-        )  # Calls make_layer which in turn calls block multiple times
+        )
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
@@ -102,8 +159,24 @@ class ResNet(nn.Module):
 
         return out
 
-    # This is the make_layer function which makes a layers according to our requirements.
+    
     def _make_layer(self, block, num_residual_blocks, out_channels, stride=1):
+        """Creates a layer of the ResNet50 architecture
+        Parameters
+        ----------
+            block: np.ndarray
+                The basic block that is going to be used multiple times
+            num_residual_blocks: int
+                The number of times the basic block is going to be used
+            out_channels: int
+                The number of output channels
+            stride: int
+                The stride of the convolutional layer
+        Returns
+        -------
+            nn.Sequential
+                The layer of the ResNet50 architecture
+        """
         identity_downsample = None
         layers = []
         # If identity still has quarter and the out_channels has expanded
@@ -121,9 +194,7 @@ class ResNet(nn.Module):
         for _ in range(num_residual_blocks - 1):
             layers.append(
                 block(self.in_channels, out_channels)
-            )  # in_channels is 256->64, 64*4(256) again and stride=1
-            # and we don't need to downsample since in_channels==out_channels.
-            # Even here the output is the same as input i.e 256
+            )
         return nn.Sequential(*layers)
 
 
@@ -131,21 +202,8 @@ def ResNet50(img_channels=3, num_classes=1000):
     return ResNet(block, [3, 4, 6, 3], img_channels, num_classes)
 
 
-def test():
-    BATCH_SIZE = 32
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    net = ResNet50(img_channels=3, num_classes=1000).to(device)
-    x = torch.randn(BATCH_SIZE, 3, 96, 112)
-    # If the image size is aXb  then we will have to pass a/4,b/4 in forward method of the block class
-    # out += torch.nn.functional.interpolate(identity, size=(a/4, b/4))
-    # out = self.relu(out)
-
-    # return out
-    x = x.to(device)
-    y = net(x).to(device)
-    assert y.size() == torch.Size([BATCH_SIZE, 1000])
-    print(y.shape)
-
 
 if __name__ == "__main__":
+    print("testing script")
+    test_resnet50(ResNet50)
     print("passed")

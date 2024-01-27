@@ -1,22 +1,28 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import matplotlib.pyplot as plt
+
 from torchvision import transforms
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-from random import randint
 
 from src.data.data_loader import DigiFace
+from src.losses.cosface import CosFaceLoss
 from src.models.resnet50 import ResNet50
 from src.models.transformer import Transformer
 from src.utils.pytorch_utils import extract_landmarks_from_image
-from src.losses.cosface import CosFaceLoss
+from tests import test_partfVit
 
 
 class part_fVit_with_landmark(nn.Module):
+    """Part-fVit with landmarks
+
+    reference: https://arxiv.org/pdf/2212.00057v1.pdf
+    """
+
     def __init__(
         self,
-        num_classes,
+        num_identites,
         num_landmarks=49,
         patch_size=28,
         in_channels=3,
@@ -27,6 +33,30 @@ class part_fVit_with_landmark(nn.Module):
         num_layers=12,
         dropout=0.0,
     ):
+        """
+        Parameters
+        ----------
+        num_identites : int
+                Number of classes in dataset
+        num_landmarks : int
+                Number of landmarks to learn
+        patch_size : int
+                Size of patch extracted from image
+        in_channels : int
+                Number of input channels
+        image_size : int
+                Size of input image
+        feat_dim : int
+                Dimension of hidden feature vector
+        mlp_dim : int
+                Dimension of MLP in transformer
+        num_heads : int
+                Number of heads in transformer
+        num_layers : int
+                Number of layers of MSA and MLP used
+        dropout : float
+                Dropout rate
+        """
         super().__init__()
         self.num_landmarks = num_landmarks
         self.image_size = image_size
@@ -37,16 +67,19 @@ class part_fVit_with_landmark(nn.Module):
         self.num_heads = num_heads
         self.num_layers = num_layers
         self.dropout = dropout
-        self.num_classes = num_classes
-
-        self.backbone = ResNet50(
-            img_channels=in_channels, num_classes=2 * num_landmarks
-        )
+        self.num_identites = num_identites
         self.patch_size = patch_size
-        self.cls_token = torch.nn.Parameter(torch.randn(self.feat_dim))
+
+        self.cls_token = torch.nn.Parameter(
+            torch.randn(self.feat_dim)
+        )  # classificaiton token
         self.pos_embedding = torch.nn.Parameter(
             torch.randn(num_landmarks + 1, self.feat_dim)
-        )
+        )  # positional embedding
+
+        self.landmark_CNN = ResNet50(
+            img_channels=in_channels, num_identites=2 * num_landmarks
+        )  # landmark extractor
 
         self.to_patch_embedding = nn.Sequential(
             nn.LayerNorm(self.patch_dim),
@@ -63,9 +96,22 @@ class part_fVit_with_landmark(nn.Module):
         )
 
     def forward(self, batch):
-        batch_size, in_channels, image_heght, image_width = batch.shape
-        landmarks = self.backbone(batch)
+        """Forward pass for part-fVit with landmarks
 
+        Parameters
+        ----------
+        batch : torch.tensor
+                Batch of images of shape (batch_size, in_channels, image_height, image_width)
+
+        Returns
+        -------
+        torch.tensor
+                Feature vector of shape (batch_size, feat_dim) the first token of which is the classification token and can be used for classification
+        """
+        batch_size = batch.shape[0]
+        landmarks = self.landmark_CNN(batch)  # (batch_size, 2 * num_landmarks)
+
+        # uniform scaling of landmarks to [0, image_size)
         temp_max = torch.max(landmarks, dim=1)[0]
         temp_max = torch.unsqueeze(temp_max, dim=1).repeat([1, 2 * self.num_landmarks])
 
@@ -76,49 +122,30 @@ class part_fVit_with_landmark(nn.Module):
             (landmarks - temp_min)
             / (temp_max - temp_min + self.eps)
             * (self.image_size - 1)
-        )
+        )  # (batch_size, 2 * num_landmarks)
 
+        # extract patches from image using bilinear interpolation
         batch = extract_landmarks_from_image(
             batch=batch,
             landmarks=landmarks,
             patch_size=[self.patch_size, self.patch_size],
-        )
+        )  # (batch_size, num_landmarks, in_channels, patch_size, patch_size)
 
+        # flattening and converting dimesion to feat_dim
         batch = batch.view(batch_size, self.num_landmarks, self.patch_dim)
         batch = self.to_patch_embedding(batch)
 
+        # adding cls token and positional embedding
         cls_tokens = self.cls_token.repeat(batch_size, 1, 1)
         z0 = torch.cat((cls_tokens, batch), dim=1)
-
         z0 += self.pos_embedding
+
+        # returning final layer after transformer
         output = self.layers(z0)[:, 0, :]
 
         return output
 
-
-def main():
-    print("testing script")
-    dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=8)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    model = part_fVit_with_landmark(num_landmarks=5, num_classes=dataset.num_identities)
-    criterion = CosFaceLoss(
-        num_classes=dataset.num_identities,
-        feat_dim=768,
-        margin=0.35,
-    )
-
-    optim = torch.optim.SGD(model.parameters(), lr=0.1)
-
-    for batch in dataloader:
-        optim.zero_grad()
-        images, labels = batch
-        output = model(images)
-        labels = labels.view(-1, 1)
-        loss = criterion(output, labels)
-        loss.backward()
-        optim.step()
-        print(loss)
-
-
 if __name__ == "__main__":
-    main()
+    print("testing script")
+    test_partfVit()
+    print("passed")
