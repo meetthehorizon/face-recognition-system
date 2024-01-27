@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from torch.linalg import vector_norm as norm
 
-from test import test_cosface
+from tests import test_cosface
 
 
 class CosFaceLoss(nn.Module):

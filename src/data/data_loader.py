@@ -6,7 +6,7 @@ from torchvision import transforms
 
 from PIL import Image
 
-from test import test_data_loader
+from tests import test_data_loader
 
 
 class DigiFace(Dataset):
@@ -97,5 +97,5 @@ class DigiFace(Dataset):
 
 if __name__ == "__main__":
     print("testing script")
-    test_data_loader()
+    test_data_loader(DigiFace)
     print("test passed")

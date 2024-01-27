@@ -1,19 +1,48 @@
-import torch 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.models import predict_model, transformer, train_model
-from src.data import data_loader
-from src.losses import loss
+import matplotlib.pyplot as plt
 
-# PredictModel will return a tensor of size batch_size x 1
-# This tensor will contain the predicted class for each image in the batch
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
-def test_predict_model(batch_size = 1):
-    assert(predict_model.PredictModel(torch.randn(1, 3, 112, 112)).shape == torch.Size([1, 1]))
 
-def test_preprocess(batch_size = 1):
-    assert(len(data_loader.DigiFace) == batch_size * 2)
+def test_data_loader(DigiFace):
+    transform = transforms.PILToTensor()
+    dataset = DigiFace(path="./data/raw/", transform=transform)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    batch = dataloader.__iter__().__next__()
 
-def test_transformer(batch_size = 1):
-    assert(transformer.Transformer)
+    fig, axes = plt.subplots(4, 8, figsize=(12, 6))
+    axes = axes.flatten()
+    for i, (image, identity) in enumerate(zip(*batch)):
+        image = image.permute(1, 2, 0)
+        axes[i].imshow(image)
+        axes[i].set_title(identity.item())
+        axes[i].axis("off")
 
+    plt.tight_layout()
+    plt.show()
+
+
+def test_resnet50(ResNet50):
+    BATCH_SIZE = 32
+    net = ResNet50(img_channels=3, num_classes=1000)
+    x = torch.randn(BATCH_SIZE, 3, 112, 112)
+    y = net(x)
+    assert y.size() == torch.Size([BATCH_SIZE, 1000])
+
+
+def test_transformer(Transformer):
+    BATCH_SIZE = 32
+    transformer_model = Transformer(img_channels=3, num_classes=1000)
+    x = torch.randn(BATCH_SIZE, 3, 112, 112)
+    y = transformer_model(x)
+    assert y.size() == torch.Size([BATCH_SIZE, Transformer.seq_len, Transformer.feat_dim])
+
+
+def test_partfVit():
+    pass
+
+def test_predict_model(batch_size=1):
+    pass

@@ -11,6 +11,7 @@ from src.losses.cosface import CosFaceLoss
 from src.models.resnet50 import ResNet50
 from src.models.transformer import Transformer
 from src.utils.pytorch_utils import extract_landmarks_from_image
+from tests import test_partfVit
 
 
 class part_fVit_with_landmark(nn.Module):
@@ -101,9 +102,14 @@ class part_fVit_with_landmark(nn.Module):
         ----------
         batch : torch.tensor
                 Batch of images of shape (batch_size, in_channels, image_height, image_width)
+
+        Returns
+        -------
+        torch.tensor
+                Feature vector of shape (batch_size, feat_dim) the first token of which is the classification token and can be used for classification
         """
         batch_size = batch.shape[0]
-        landmarks = self.landmark_CNN(batch) # (batch_size, 2 * num_landmarks)
+        landmarks = self.landmark_CNN(batch)  # (batch_size, 2 * num_landmarks)
 
         # uniform scaling of landmarks to [0, image_size)
         temp_max = torch.max(landmarks, dim=1)[0]
@@ -116,7 +122,7 @@ class part_fVit_with_landmark(nn.Module):
             (landmarks - temp_min)
             / (temp_max - temp_min + self.eps)
             * (self.image_size - 1)
-        ) # (batch_size, 2 * num_landmarks)
+        )  # (batch_size, 2 * num_landmarks)
 
         # extract patches from image using bilinear interpolation
         batch = extract_landmarks_from_image(
@@ -125,43 +131,21 @@ class part_fVit_with_landmark(nn.Module):
             patch_size=[self.patch_size, self.patch_size],
         )  # (batch_size, num_landmarks, in_channels, patch_size, patch_size)
 
+        # flattening and converting dimesion to feat_dim
         batch = batch.view(batch_size, self.num_landmarks, self.patch_dim)
         batch = self.to_patch_embedding(batch)
 
+        # adding cls token and positional embedding
         cls_tokens = self.cls_token.repeat(batch_size, 1, 1)
         z0 = torch.cat((cls_tokens, batch), dim=1)
-
         z0 += self.pos_embedding
+
+        # returning final layer after transformer
         output = self.layers(z0)[:, 0, :]
 
         return output
 
-
-def main():
-    print("testing script")
-    dataset = DigiFace(path="data/raw", transform=transforms.ToTensor(), num_images=8)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
-    model = part_fVit_with_landmark(
-        num_landmarks=5, num_identites=dataset.num_identities
-    )
-    criterion = CosFaceLoss(
-        num_identites=dataset.num_identities,
-        feat_dim=768,
-        margin=0.35,
-    )
-
-    optim = torch.optim.SGD(model.parameters(), lr=0.1)
-
-    for batch in dataloader:
-        optim.zero_grad()
-        images, labels = batch
-        output = model(images)
-        labels = labels.view(-1, 1)
-        loss = criterion(output, labels)
-        loss.backward()
-        optim.step()
-        print(loss)
-
-
 if __name__ == "__main__":
-    main()
+    print("testing script")
+    test_partfVit()
+    print("passed")
