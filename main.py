@@ -4,7 +4,8 @@ import yaml
 import sys
 import shutil
 
-from src.scripts.train_model import train_model
+import src.scripts.train_model as train_model
+
 
 def create_folder(experiment_name, config_file):
     base_dir = "experiments"
@@ -32,7 +33,7 @@ def main(config_file):
     )
 
     print("Folder created at {}".format(folder_name))
-    train_model(config=config, base_dir=folder_name)
+    train_model.main(config=config, experiment_dir=folder_name)
 
 
 if __name__ == "__main__":
