@@ -12,13 +12,13 @@ To do:
 - [x] Dataloader
 - [x] Parameters!! (Experiments kaunse run krne hai)
 - [x] Config.yaml
-- [ ] Modular Code
+- [x] Modular Code
 - [ ] Device implementation of MutliHeadAttention and other functions
 - [ ] Train model
-- [ ] Docmentation
+- [x] Docmentation
 
 Temp To do:
-- [ ] test scripts
+- [x] test scripts
 - [ ] metrics 
 - [ ] train & evaluation & test
 - [ ] exp wala bkc
