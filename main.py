@@ -20,9 +20,8 @@ def create_folder(experiment_name, config_file):
     else:
         os.makedirs(folder_name)
         shutil.copy(config_file, folder_name)
-
+        
     return folder_name
-
 
 def main(config_file):
     with open(config_file, "r") as file:
