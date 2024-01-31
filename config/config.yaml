@@ -5,9 +5,9 @@ logging : True
 #DATA SETTINGS
 data_path : ./data/raw
 num_identities : None #None for all identities
-train_split : 0.8
-val_split : 0.1
-test_split : 0.1
+train_ratio : 0.6
+val_ratio : 0.2
+test_ratio : 0.2
 
 #IMAGE DETAILS
 image_width : 112

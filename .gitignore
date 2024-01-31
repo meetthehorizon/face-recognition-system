@@ -1,5 +1,3 @@
-data/raw/*
-data/processed/*
-data/interim/*
-data/external/*
+data/*
 __pycache__/
+learn/*
