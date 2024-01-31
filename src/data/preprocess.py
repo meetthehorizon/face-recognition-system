@@ -45,7 +45,7 @@ def split_data(
 
         random.shuffle(files)
         train_files = files[: int(len(files) * train_ratio)]
-        val_files = files[
+        val_fileshttps://codeforces.com/profile/J_Jain = files[
             int(len(files) * train_ratio) : int(len(files) * (train_ratio + val_ratio))
         ]
         test_files = files[int(len(files) * (train_ratio + val_ratio)) :]

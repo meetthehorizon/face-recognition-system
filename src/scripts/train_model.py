@@ -41,33 +41,33 @@ def main(config, experiment_dir):
     )
 
     # loading train, val and test datasets
-    train_data = DigiFace(path=train_path, num_identities=config["num_identities"])
-    val_data = DigiFace(path=val_path, num_identities=config["num_identities"])
-    test_data = DigiFace(path=train_path, num_identities=config["num_identities"])
+    # train_data = DigiFace(path=train_path, num_identities=config["num_identities"])
+    # val_data = DigiFace(path=val_path, num_identities=config["num_identities"])
+    # test_data = DigiFace(path=train_path, num_identities=config["num_identities"])
 
-    print(train_data.identities)
-    print(val_data.identities)
-    print(test_data.identities)
+    # print(train_data.identities)
+    # print(val_data.identities)
+    # print(test_data.identities)
 
-    train_loader = DataLoader(
-        dataset=train_data, batch_size=config["batch_size"], shuffle=True
-    )
-    val_loader = DataLoader(
-        dataset=val_data, batch_size=config["batch_size"], shuffle=True
-    )
-    test_loader = DataLoader(
-        dataset=test_data, batch_size=config["batch_size"], shuffle=True
-    )
+    # train_loader = DataLoader(
+    #     dataset=train_data, batch_size=config["batch_size"], shuffle=True
+    # )
+    # val_loader = DataLoader(
+    #     dataset=val_data, batch_size=config["batch_size"], shuffle=True
+    # )
+    # test_loader = DataLoader(
+    #     dataset=test_data, batch_size=config["batch_size"], shuffle=True
+    # )
 
-    model = PartFVitWithLandmark(
-        num_identities=len(train_data),
-        num_landmarks=config["num_landmarks"],
-        patch_size=config["patch_size"],
-        in_channels=config["num_channels"],
-        image_size=config["image_width"],
-        feat_dim=config["feat_dim"],
-        mlp_dim=config["mlp_dim"],
-        num_heads=config["num_heads"],
-        num_layers=config["num_layers"],
-        dropout=config["dropout"],
-    )
+    # model = PartFVitWithLandmark(
+    #     num_identities=len(train_data),
+    #     num_landmarks=config["num_landmarks"],
+    #     patch_size=config["patch_size"],
+    #     in_channels=config["num_channels"],
+    #     image_size=config["image_width"],
+    #     feat_dim=config["feat_dim"],
+    #     mlp_dim=config["mlp_dim"],
+    #     num_heads=config["num_heads"],
+    #     num_layers=config["num_layers"],
+    #     dropout=config["dropout"],
+    # )
