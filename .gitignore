@@ -1,5 +1,7 @@
-data/raw/*
-data/processed/*
-data/interim/*
-data/external/*
+data/*
 __pycache__/
+__pycache__
+learn/*
+scratch/*
+papers
+checkpoints*

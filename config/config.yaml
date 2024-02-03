@@ -1,0 +1,50 @@
+#GENERAL SETTINGS
+experiment_name: train_from_scratch
+logging: True
+device: cpu
+
+#DATA SETTINGS
+data_path: ./data/raw
+num_identities: 10 #None for all identities
+train_ratio: 0.6
+val_ratio: 0.2
+test_ratio: 0.2
+
+#IMAGE DETAILS
+image_width: 112
+image_height: 112
+num_channels: 3
+
+#LOSS SETUP
+margin: 0.35
+
+#DATA AUGMENTATION
+
+#MODEL SETTINGS
+save_path: ./checkpoints.pth
+save_every: 4
+landmark_model: resnet50
+fine_tuning: False
+with_landmarks: False
+pretrained: False
+transform: False
+
+#RESNET50 PARAMETERS
+weight_decay_resnet: 0.05
+
+#Part-fViT PARAMETERS
+num_landmarks: 49
+patch_size: 28
+feat_dim: 768
+mlp_dim: 2048
+num_heads: 12
+num_layers: 12
+dropout: 0.1
+weight_decay_fViT: 0.1
+
+#TRAINING PARAMETERS
+batch_size: 2
+num_epochs: 1
+warmup_epochs: 3
+lr: 0.001
+loss: cosface
