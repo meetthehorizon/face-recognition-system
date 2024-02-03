@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 
-def extract_landmarks_from_image(batch, landmarks, patch_size):
+def extract_landmarks_from_image(batch, landmarks, patch_size, device):
     """Extract landmarks from image.
 
     Parameters
@@ -43,6 +43,9 @@ def extract_landmarks_from_image(batch, landmarks, patch_size):
     sampling_grid = torch.stack(
         (-grid_y, grid_x), dim=-1
     )  # shape: (patch_height, patch_width, 2)
+
+    sampling_grid.to(device)
+
     list_patches = []
 
     for i in range(num_landmarks):

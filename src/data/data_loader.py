@@ -19,23 +19,26 @@ class DigiFace(Dataset):
     """
 
     def __init__(
-        self, path="data/raw", transform=transforms.ToTensor(), num_identities=None
+        self, path="data/raw", transform=transforms.PILToTensor(), num_identities=None
     ):
         """
         Parameters
         ----------
         path : str
                 Path to images directory
-        transform : callable
+        transform : callables
                 Transformation to apply to image and mask
         num_identities : int
                 Number of identities to use from dataset
         """
         self.path = path
         self.transform = transform
-        self.identities = os.listdir(path)
-        self.num_identities = num_identities
-        self.samples = self._generate_samples(num_identities=num_identities)
+        self.path = path
+        self.num_identities = (
+            num_identities if num_identities is not None else len(os.listdir(path))
+        )
+        self.identities = sorted(os.listdir(path))[:num_identities]
+        self.samples = self._generate_samples()
 
     def __getitem__(self, index):
         """
@@ -55,15 +58,15 @@ class DigiFace(Dataset):
         if index >= len(self) or index < 0:
             raise IndexError("Index out of range")
 
-        identity, image_path = self.samples[index]
+        image_path, identity = self.samples[index]
         image = Image.open(image_path).convert("RGB")
 
         if self.transform:
             image = self.transform(image)
 
-        return image, int(identity)
+        return image.float(), torch.tensor(identity, dtype=torch.long)
 
-    def _generate_samples(self, num_identities):
+    def _generate_samples(self):
         """Generate sample from dataset.
 
         Parameters
@@ -79,14 +82,9 @@ class DigiFace(Dataset):
         samples = []
         for identity in self.identities:
             identity_path = os.path.join(self.path, identity)
-            if num_identities:
-                identity_path = identity_path[:num_identities]
-            images_path = os.listdir(identity_path)
-
-            for image_path in images_path:
-                image_path = os.path.join(identity_path, image_path)
-                samples.append((identity, image_path))
-
+            for img_idx in os.listdir(identity_path):
+                img_path = os.path.join(identity_path, img_idx)
+                samples.append((img_path, int(identity)))
         return samples
 
     def __len__(self):

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+import torchvision.models as model
 
 from torchvision import transforms
 from torch.utils.data import DataLoader
@@ -10,6 +11,7 @@ from src.data.data_loader import DigiFace
 from src.losses.cosface import CosFaceLoss
 from src.models.resnet50 import ResNet50
 from src.models.transformer import Transformer
+
 from src.utils.pytorch_utils import extract_landmarks_from_image
 
 
@@ -31,6 +33,7 @@ class PartFVitWithLandmark(nn.Module):
         num_heads=12,
         num_layers=12,
         dropout=0.0,
+        device="cpu",
     ):
         """
         Parameters
@@ -78,7 +81,9 @@ class PartFVitWithLandmark(nn.Module):
 
         self.landmark_CNN = ResNet50(
             img_channels=in_channels, num_classes=2 * num_landmarks
-        )  # landmark extractor
+        )
+
+        # landmark extractor
 
         self.to_patch_embedding = nn.Sequential(
             nn.LayerNorm(self.patch_dim),
@@ -93,6 +98,8 @@ class PartFVitWithLandmark(nn.Module):
             num_layers=self.num_layers,
             dropout=self.dropout,
         )
+
+        self.device = device
 
     def forward(self, batch):
         """Forward pass for part-fVit with landmarks
@@ -128,6 +135,7 @@ class PartFVitWithLandmark(nn.Module):
             batch=batch,
             landmarks=landmarks,
             patch_size=[self.patch_size, self.patch_size],
+            device=self.device,
         )  # (batch_size, num_landmarks, in_channels, patch_size, patch_size)
 
         # flattening and converting dimesion to feat_dim
