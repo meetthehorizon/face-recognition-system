@@ -44,18 +44,16 @@ def extract_landmarks_from_image(batch, landmarks, patch_size, device):
         (-grid_y, grid_x), dim=-1
     )  # shape: (patch_height, patch_width, 2)
 
-    sampling_grid.to(device)
+    sampling_grid = sampling_grid.to(device)
 
     list_patches = []
 
+
     for i in range(num_landmarks):
         land = landmarks[:, i, :]
-        patch_grid = (land[:, None, None, :] + sampling_grid[None, :, :, :]) / (
-            0.5
-            * torch.tensor([image_height, image_width], dtype=torch.float32)[
-                None, None, None, :
-            ]
-        ) - 1
+        # print(f'device: {device} sampling_grid: {sampling_grid.device} landmark: {land.device}')
+        # exit(0)
+        patch_grid = (land[:, None, None, :] + sampling_grid[None, :, :, :]) / (0.5* torch.tensor([image_height, image_width], dtype=torch.float32, device=device)[None, None, None, :]) - 1
         single_landmark_patch = F.grid_sample(batch, patch_grid, align_corners=False)
         list_patches.append(single_landmark_patch)
 

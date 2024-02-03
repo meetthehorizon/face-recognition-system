@@ -5,7 +5,7 @@ device: cpu
 
 #DATA SETTINGS
 data_path: ./data/raw
-num_identities: 4 #None for all identities
+num_identities: 10 #None for all identities
 train_ratio: 0.6
 val_ratio: 0.2
 test_ratio: 0.2
@@ -44,7 +44,7 @@ weight_decay_fViT: 0.1
 
 #TRAINING PARAMETERS
 batch_size: 2
-num_epochs: 2
-warmup_epochs: 1
+num_epochs: 1
+warmup_epochs: 3
 lr: 0.001
 loss: cosface
