@@ -1,6 +1,7 @@
 #GENERAL SETTINGS
 experiment_name: train_from_scratch
 logging: True
+device: cpu
 
 #DATA SETTINGS
 data_path: ./data/raw

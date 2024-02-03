@@ -158,7 +158,7 @@ def main(config, experiment_dir):
             Path to the experiment directory where model results, states and result will be saved
     """
 
-    device = "cpu"
+    device = config["device"]
     kargs = load_train_obj(config=config, experiment_dir=experiment_dir, device=device)
 
     trainer = Trainer(
