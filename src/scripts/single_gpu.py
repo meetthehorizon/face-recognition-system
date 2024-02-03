@@ -38,13 +38,11 @@ class Trainer:
         self.checkpoint_path = checkpoint_path
 
         self.model.to(self.device)
-        self.criterion.to(self.device)
 
     def _run_batch(self, source, target):
         self.optimizer.zero_grad()
         output = self.model(source)
         loss = self.criterion(output, target)
-        print(f'current: {loss}')
         loss.backward()
         self.optimizer.step()
         self.scheduler.step()
@@ -161,7 +159,6 @@ def main(config, experiment_dir):
     """
 
     device = config["device"]
-
     kargs = load_train_obj(config=config, experiment_dir=experiment_dir, device=device)
 
     trainer = Trainer(

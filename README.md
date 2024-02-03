@@ -6,19 +6,13 @@ How to use:
 2. create a new conda environment using the command : `conda create --name new_env_name --file requirements.txt`
 
 To do:
-- [x] Transformer model
-- [x] CosFaceloss
-- [x] Finish partfViT Model
-- [x] Dataloader
-- [x] Parameters!! (Experiments kaunse run krne hai)
-- [x] Config.yaml
-- [x] Modular Code
+
 - [ ] Device implementation of MutliHeadAttention and other functions
 - [ ] Train model
-- [x] Docmentation
+- [ ] Documentation
 
 Temp To do:
-- [x] test scripts
-- [ ] metrics 
+
+- [ ] metrics
 - [ ] train & evaluation & test
 - [ ] exp wala bkc
