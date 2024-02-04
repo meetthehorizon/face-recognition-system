@@ -8,6 +8,7 @@ from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
+from src.evaluation.metrics import compute_metrics
 from src.data.data_loader import DigiFace
 from src.data.preprocess import split_data
 from src.losses.cosface import CosFaceLoss
@@ -49,7 +50,8 @@ class Trainer:
         y_score = self.model(source, target)
         print(y_score.shape)
         loss = self.criterion(y_score, target)
-        print(f"Current Loss: {loss.item()}")
+        metrics = compute_metrics(target, y_score)
+        print(metrics)
         loss.backward()
         self.optimizer.step()
         self.scheduler.step()
