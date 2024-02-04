@@ -33,7 +33,6 @@ class PartFVitWithLandmark(nn.Module):
         num_heads=12,
         num_layers=12,
         dropout=0.0,
-        device="cpu",
     ):
         """
         Parameters
@@ -99,7 +98,6 @@ class PartFVitWithLandmark(nn.Module):
             dropout=self.dropout,
         )
 
-        self.device = device
 
     def forward(self, batch):
         """Forward pass for part-fVit with landmarks
@@ -135,7 +133,6 @@ class PartFVitWithLandmark(nn.Module):
             batch=batch,
             landmarks=landmarks,
             patch_size=[self.patch_size, self.patch_size],
-            device=self.device,
         )  # (batch_size, num_landmarks, in_channels, patch_size, patch_size)
 
         # flattening and converting dimesion to feat_dim

@@ -42,8 +42,10 @@ class Trainer:
     def _run_batch(self, source, target):
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = self.criterion(output, target)
+        loss, pred = self.criterion(output, target)
         loss.backward()
+        print(f"loss: {loss.item()}")
+        print(f"pred: {pred}")
         self.optimizer.step()
         self.scheduler.step()
 
