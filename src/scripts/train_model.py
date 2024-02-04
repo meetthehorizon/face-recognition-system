@@ -7,7 +7,8 @@ from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from torch.utils.data.distributed import DistributedSampler as DDP
+from torch.utils.data.distributed import DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
 from src.data.data_loader import DigiFace
@@ -19,8 +20,9 @@ from src.models.concat import ConcatModelWithLoss
 
 def ddp_setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12335"
-    init_process_group(backend="nccl", rank=rank, world_size=world_size)
+    os.environ["MASTER_PORT"] = "450"
+    os.environ["NCCL_DEBUG"] = "INFO"
+    init_process_group(backend="nccl", init_method="env://")
 
 
 class Trainer:
@@ -33,7 +35,7 @@ class Trainer:
         train_loader,
         val_loader,
         test_loader,
-        device,
+        gpu_id,
         save_every,
         checkpoint_path,
     ):
@@ -46,11 +48,11 @@ class Trainer:
         self.val_loader = val_loader
         self.test_loader = test_loader
 
-        self.device = device
+        self.gpu_id = gpu_id
         self.save_every = save_every
         self.checkpoint_path = checkpoint_path
 
-        self.model.to(self.device)
+        self.model = DDP(self.model, device_ids=[self.gpu_id])
 
     def _run_batch(self, source, target):
         self.optimizer.zero_grad()
@@ -65,23 +67,23 @@ class Trainer:
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_loader))[0])
         print(
-            f"[GPU {self.device}] | Epoch: {epoch+1} | batchsize: {b_sz} | steps: {len(self.train_loader)}"
+            f"[GPU {self.gpu_id}] | Epoch: {epoch+1} | batchsize: {b_sz} | steps: {len(self.train_loader)}"
         )
         for i, (source, targets) in enumerate(self.train_loader):
-            source, targets = source.to(self.device), targets.to(self.device)
+            source, targets = source.to(self.gpu_id), targets.to(self.gpu_id)
             self._run_batch(source=source, target=targets)
 
     def _save_checkpoint(self, epoch):
-        ckp = self.model.state_dict()
+        ckp = self.model.module.state_dict()
         torch.save(ckp, self.checkpoint_path)
         print(f"epoch {epoch+1}: Training checkpoint saved at {self.checkpoint_path}")
 
     def train(self, num_epochs):
         for epoch in range(num_epochs):
             self._run_epoch(epoch)
-            if (epoch + 1) % self.save_every == 0:
+            if self.gpu_id == "cuda:0" and (epoch + 1) % self.save_every == 0:
                 self._save_checkpoint(epoch)
-        if num_epochs % self.save_every != 0:
+        if self.gpu_id == "cuda:0" and num_epochs % self.save_every != 0:
             self._save_checkpoint(num_epochs)
 
 
@@ -100,9 +102,24 @@ def load_train_obj(config):
     val_data = DigiFace(path=val_path)
     test_data = DigiFace(path=test_path)
 
-    train_loader = DataLoader(train_data, batch_size=config["batch_size"])
-    val_loader = DataLoader(val_data, batch_size=config["batch_size"])
-    test_loader = DataLoader(test_data, batch_size=config["batch_size"])
+    train_loader = DataLoader(
+        train_data,
+        batch_size=config["batch_size"],
+        pin_memory=True,
+        sampler=DistributedSampler(train_data),
+    )
+    val_loader = DataLoader(
+        val_data,
+        batch_size=config["batch_size"],
+        pin_memory=True,
+        sampler=DistributedSampler(val_data),
+    )
+    test_loader = DataLoader(
+        test_data,
+        batch_size=config["batch_size"],
+        pin_memory=True,
+        sampler=DistributedSampler(test_data),
+    )
 
     part_fvit = PartFVitWithLandmark(
         num_identites=train_data.num_identities,
@@ -168,7 +185,7 @@ def load_train_obj(config):
     return kargs
 
 
-def main(config, experiment_dir):
+def start_proc(rank, world_size, config, experiment_dir):
     """
     Parameters
     ----------
@@ -178,15 +195,20 @@ def main(config, experiment_dir):
             Path to the experiment directory where model results, states and result will be saved
     """
 
-    device = config["device"]
-
+    ddp_setup(rank, world_size)
     kargs = load_train_obj(config=config)
 
     trainer = Trainer(
         **kargs,
         save_every=config["save_every"],
-        device=device,
+        gpu_id=rank,
         checkpoint_path=config["save_path"],
     )
 
     trainer.train(num_epochs=config["num_epochs"])
+    destroy_process_group()
+
+
+def main(config, experiment_dir):
+    world_size = torch.cuda.device_count()
+    mp.spawn(start_proc, args=(world_size, config, experiment_dir), nprocs=world_size)

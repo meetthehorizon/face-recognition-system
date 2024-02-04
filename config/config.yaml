@@ -1,6 +1,5 @@
 #GENERAL SETTINGS
 experiment_name: train_from_scratch
-logging: True
 device: "cuda:0"
 
 #DATA SETTINGS
@@ -24,10 +23,6 @@ margin: 0.35
 save_path: ./checkpoints.pth
 save_every: 3
 landmark_model: resnet50
-fine_tuning: False
-with_landmarks: False
-pretrained: False
-transform: False
 
 #RESNET50 PARAMETERS
 weight_decay_resnet: 0.05
@@ -47,4 +42,3 @@ batch_size: 4
 num_epochs: 10
 warmup_epochs: 3
 lr: 0.001
-loss: cosface
