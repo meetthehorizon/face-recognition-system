@@ -7,8 +7,6 @@ from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from torch.utils.data.distributed import DistributedSampler as DDP
-from torch.distributed import init_process_group, destroy_process_group
 
 from src.evaluation.metrics import compute_metrics
 from src.data.data_loader import DigiFace
@@ -16,12 +14,6 @@ from src.data.preprocess import split_data
 from src.losses.cosface import CosFaceLoss
 from src.models.partfVit import PartFVitWithLandmark
 from src.models.concat import ConcatModelWithLoss
-
-
-def ddp_setup(rank, world_size):
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12335"
-    init_process_group(backend="nccl", rank=rank, world_size=world_size)
 
 
 class Trainer:
