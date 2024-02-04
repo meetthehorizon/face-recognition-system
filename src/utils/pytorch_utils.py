@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 
-def extract_landmarks_from_image(batch, landmarks, patch_size, device):
+def extract_landmarks_from_image(batch, landmarks, patch_size):
     """Extract landmarks from image.
 
     Parameters
@@ -28,6 +28,8 @@ def extract_landmarks_from_image(batch, landmarks, patch_size, device):
     landmarks = landmarks.view(
         batch_size, num_landmarks, 2
     )  # Reshaping landmarks to (batch_size, num_landmarks, 2)
+
+    device = landmarks.device
 
     patch_range = [
         [-patch_size[0] / 2, patch_size[0] / 2],

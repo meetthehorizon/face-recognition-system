@@ -32,7 +32,6 @@ class CosFaceLoss(nn.Module):
         super().__init__()
         self.margin = margin
         self.num_classes = num_classes
-        self.cross_loss = nn.CrossEntropyLoss()
         self.weight = nn.Parameter(torch.FloatTensor(feat_dim, num_classes))
         nn.init.xavier_uniform_(self.weight)
 
@@ -65,9 +64,7 @@ class CosFaceLoss(nn.Module):
         y_hat = one_hot * phi + (1.0 - one_hot) * cosine
         y_hat *= x_norm
 
-        loss = self.cross_loss(y_hat, one_hot)
-
-        return loss
+        return y_hat
 
 
 if __name__ == "__main__":
