@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_auc_score, average_precision_score, precision_recall_curve, auc, roc_curve, f1_score, precision_score, recall_score, confusion_matrix   
+from sklearn.metrics import roc_auc_score, f1_score, accuracy_score, precision_score, recall_score, confusion_matrix   
 from sklearn.preprocessing import label_binarize
 
 def compute_metrics(y_true, y_score, metrics=['accuracy','f1','precision','recall', 'confusion_matrix']):
@@ -32,8 +32,7 @@ def compute_metrics(y_true, y_score, metrics=['accuracy','f1','precision','recal
     results = {}
     for metric in metrics:
         if metric == 'accuracy':
-            results[metric] = (y_true == y_pred).mean()
-            results[metric]*=100
+            results[metric] = accuracy_score(y_true, y_pred)
         elif metric == 'confusion_matrix':
             results[metric] = confusion_matrix(y_true, y_pred)
             sns.heatmap(results[metric], annot=True, fmt='g')
@@ -45,7 +44,7 @@ def compute_metrics(y_true, y_score, metrics=['accuracy','f1','precision','recal
         elif metric == 'recall':
             results[metric] = recall_score(y_true, y_pred, average='micro')
         elif metric == 'roc_auc_score':
-            results[metric] = roc_auc_score(y_true_binarized, average='macro')
+            results[metric] = roc_auc_score(y_true_binarized, y_prob, multi_class='ovr', average='macro')
         else:
             raise ValueError(f'Unsupported metric {metric}')
     return results
