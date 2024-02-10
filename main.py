@@ -4,7 +4,7 @@ import yaml
 import sys
 import shutil
 
-import src.scripts.train_model as train_model
+import src.scripts.single_gpu as train_model
 
 
 def create_folder(experiment_name, config_file):
@@ -20,8 +20,9 @@ def create_folder(experiment_name, config_file):
     else:
         os.makedirs(folder_name)
         shutil.copy(config_file, folder_name)
-        
+
     return folder_name
+
 
 def main(config_file):
     with open(config_file, "r") as file:

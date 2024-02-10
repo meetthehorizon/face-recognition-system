@@ -11,5 +11,4 @@ class ConcatModelWithLoss(nn.Module):
     def forward(self, batch, labels):
         cls_token = self.main_model(batch)
         y_pred = self.criterion(cls_token, labels)
-
         return y_pred

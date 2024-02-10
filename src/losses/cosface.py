@@ -49,7 +49,7 @@ class CosFaceLoss(nn.Module):
         x_norm = norm(x, ord=2, dim=1, keepdim=True)
         x_norm = x_norm.repeat(1, self.num_classes)  # (batch_size, num_classes)
 
-        # Normalisation of weights and features
+        # # Normalisation of weights and features
         x = F.normalize(x, p=2, dim=1)
         W = F.normalize(self.weight, p=2, dim=0)
 
@@ -60,7 +60,7 @@ class CosFaceLoss(nn.Module):
         )  # One hot encoding of labels
         one_hot = torch.squeeze(one_hot, dim=1).float()
 
-        # the following line creates margin for each correct class
+        # # the following line creates margin for each correct class
         y_hat = one_hot * phi + (1.0 - one_hot) * cosine
         y_hat *= x_norm
 
