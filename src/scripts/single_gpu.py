@@ -1,14 +1,14 @@
 import os
 import torch
+import numpy as np
 import torch.multiprocessing as mp
-
 
 from torch.optim import AdamW
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
-from src.evaluation.metrics import compute_metrics
+from src.evaluation.metrics import compute_metrics, save_confusion_matrix, save_metrics
 from src.data.data_loader import DigiFace
 from src.data.preprocess import split_data
 from src.losses.cosface import CosFaceLoss
@@ -29,6 +29,7 @@ class Trainer:
         device,
         save_every,
         checkpoint_path,
+        experiment_dir,
     ):
         self.model = model
         self.criterion = criterion
@@ -42,19 +43,42 @@ class Trainer:
         self.device = device
         self.save_every = save_every
         self.checkpoint_path = checkpoint_path
+        self.experiment_dir = experiment_dir
 
+        self.train_metrics = {"losses": []}
+        self.val_metrics = {"losses": []}
+
+        self.cache = []
         self.model.to(self.device)
 
-    def _run_batch(self, source, target):
-        self.optimizer.zero_grad()
+    def _run_batch(self, source, target, is_train=True):
+        if is_train:
+            self.model.train()
+            self.optimizer.zero_grad()
+
+        else:
+            self.model.eval()
+
         y_score = self.model(source, target)
-        print(y_score.shape)
         loss = self.criterion(y_score, target)
-        metrics = compute_metrics(target, y_score)
-        print(metrics)
-        loss.backward()
-        self.optimizer.step()
-        self.scheduler.step()
+
+        if is_train:
+            loss.backward()
+            self.optimizer.step()
+            self.scheduler.step()
+
+            self.train_metrics = compute_metrics(self.train_metrics, target, y_score)
+            self.train_metrics["losses"].append(loss.item())
+
+        else:
+            self.val_metrics = compute_metrics(self.val_metrics, target, y_score)
+            self.val_metrics["losses"].append(loss.item())
+            self.cache.append(
+                (
+                    y_score.detach().cpu().numpy(),
+                    target.detach().cpu().numpy().astype(np.int64),
+                )
+            )
 
     def _run_epoch(self, epoch):
         b_sz = len(next(iter(self.train_loader))[0])
@@ -63,7 +87,15 @@ class Trainer:
         )
         for i, (source, targets) in enumerate(self.train_loader):
             source, targets = source.to(self.device), targets.to(self.device)
-            self._run_batch(source=source, target=targets)
+            self._run_batch(source=source, target=targets, is_train=True)
+
+    def _run_eval(self, epoch):
+        self.cache = []
+        for i, (source, targets) in enumerate(self.val_loader):
+            source, targets = source.to(self.device), targets.to(self.device)
+            self._run_batch(source=source, target=targets, is_train=False)
+
+        save_confusion_matrix(self.cache, self.experiment_dir, epoch)
 
     def _save_checkpoint(self, epoch):
         ckp = self.model.state_dict()
@@ -75,6 +107,8 @@ class Trainer:
             self._run_epoch(epoch)
             if (epoch + 1) % self.save_every == 0:
                 self._save_checkpoint(epoch)
+
+            self._run_eval(epoch)
         if num_epochs % self.save_every != 0:
             self._save_checkpoint(num_epochs)
 
@@ -94,9 +128,9 @@ def load_train_obj(config):
     val_data = DigiFace(path=val_path)
     test_data = DigiFace(path=test_path)
 
-    train_loader = DataLoader(train_data, batch_size=config["batch_size"])
-    val_loader = DataLoader(val_data, batch_size=config["batch_size"])
-    test_loader = DataLoader(test_data, batch_size=config["batch_size"])
+    train_loader = DataLoader(train_data, batch_size=config["batch_size"], shuffle=True)
+    val_loader = DataLoader(val_data, batch_size=config["batch_size"], shuffle=True)
+    test_loader = DataLoader(test_data, batch_size=config["batch_size"], shuffle=True)
 
     part_fvit = PartFVitWithLandmark(
         num_identites=train_data.num_identities,
@@ -181,6 +215,19 @@ def main(config, experiment_dir):
         save_every=config["save_every"],
         device=device,
         checkpoint_path=config["save_path"],
+        experiment_dir=experiment_dir,
     )
 
     trainer.train(num_epochs=config["num_epochs"])
+
+    save_metrics(
+        trainer.train_metrics,
+        title="Training Metrics",
+        filename=os.path.join(experiment_dir, "train_metrics.jpeg"),
+    )
+
+    save_metrics(
+        trainer.val_metrics,
+        title="Validation Metrics",
+        filename=os.path.join(experiment_dir, "val_metrics.jpeg"),
+    )
