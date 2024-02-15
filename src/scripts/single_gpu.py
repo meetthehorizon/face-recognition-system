@@ -54,15 +54,18 @@ class Trainer:
     def _run_batch(self, source, target, is_train=True):
         if is_train:
             self.model.train()
-            self.optimizer.zero_grad()
-
         else:
             self.model.eval()
 
         y_score = self.model(source, target)
         loss = self.criterion(y_score, target)
 
+        print(torch.argmax(y_score, dim=1))
+        print(target)
+        print()
+
         if is_train:
+            self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             self.scheduler.step()
@@ -220,14 +223,14 @@ def main(config, experiment_dir):
 
     trainer.train(num_epochs=config["num_epochs"])
 
-    save_metrics(
-        trainer.train_metrics,
-        title="Training Metrics",
-        filename=os.path.join(experiment_dir, "train_metrics.jpeg"),
-    )
+    # save_metrics(
+    #     trainer.train_metrics,
+    #     title="Training Metrics",
+    #     filename=os.path.join(experiment_dir, "train_metrics.jpeg"),
+    # )
 
-    save_metrics(
-        trainer.val_metrics,
-        title="Validation Metrics",
-        filename=os.path.join(experiment_dir, "val_metrics.jpeg"),
-    )
+    # save_metrics(
+    #     trainer.val_metrics,
+    #     title="Validation Metrics",
+    #     filename=os.path.join(experiment_dir, "val_metrics.jpeg"),
+    # )

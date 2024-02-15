@@ -1,48 +1,46 @@
 #GENERAL SETTINGS
-experiment_name : train_from_scratch
-logging : True
+experiment_name: train_from_scratch
+logging: True
 
 #DATA SETTINGS
-data_path : ./data/raw
-num_identities : None #None for all identities
+data_path: ./data/raw
+num_identities: 2 #None for all identities
 
 #IMAGE DETAILS
-image_width : 112
-image_height : 112
-num_channels : 3
+image_width: 112
+image_height: 112
+num_channels: 3
 
 #DATA AUGMENTATION
 
 #MODEL SETTINGS
-save_path : ./checkpoints
-num_checkpoint : 2
-landmark_model : resnet50
-fine_tuning : False
-with_landmarks : False
-pretrained : False
-transform : False
+save_path: ./checkpoints
+num_checkpoint: 2
+landmark_model: resnet50
+fine_tuning: False
+with_landmarks: False
+pretrained: False
+transform: False
 
 #RESNET50 PARAMETERS
-num_classes : 98 #Ensure this is twice of num_landmarks
-weight_decay : 0.05
-
+num_classes: 98 #Ensure this is twice of num_landmarks
+weight_decay: 0.05
 
 #Part-fVIT PARAMETERS
-num_landmarks : 49
-patch_size : 28
-feat_dim : 768
-mlp_dim : 2048
-num_heads : 12
-num_layers : 12
-dropout : 0.1
-weight_deacy : 0.1
+num_landmarks: 49
+patch_size: 28
+feat_dim: 768
+mlp_dim: 2048
+num_heads: 12
+num_layers: 12
+dropout: 0.1
+weight_deacy: 0.1
 
 #TRAINING PARAMETERS
-batch_size : 32
-total_epochs : 34
-warmup_epochs : 5
-num_epochs : 100
-lr : 0.001
-loss : cosface
-optimizer : adam
-scheduler : cosine
+batch_size: 1
+total_epochs: 34
+warmup_epochs: 1
+lr: 0.001
+loss: cosface
+optimizer: adam
+scheduler: cosine
