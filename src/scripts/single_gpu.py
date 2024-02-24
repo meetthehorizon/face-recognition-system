@@ -223,14 +223,14 @@ def main(config, experiment_dir):
 
     trainer.train(num_epochs=config["num_epochs"])
 
-    # save_metrics(
-    #     trainer.train_metrics,
-    #     title="Training Metrics",
-    #     filename=os.path.join(experiment_dir, "train_metrics.jpeg"),
-    # )
+    save_metrics(
+        trainer.train_metrics,
+        title="Training Metrics",
+        filename=os.path.join(experiment_dir, "train_metrics.jpeg"),
+    )
 
-    # save_metrics(
-    #     trainer.val_metrics,
-    #     title="Validation Metrics",
-    #     filename=os.path.join(experiment_dir, "val_metrics.jpeg"),
-    # )
+    save_metrics(
+        trainer.val_metrics,
+        title="Validation Metrics",
+        filename=os.path.join(experiment_dir, "val_metrics.jpeg"),
+    )

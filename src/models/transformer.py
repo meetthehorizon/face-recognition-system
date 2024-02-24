@@ -46,6 +46,7 @@ class Transformer(nn.Module):
                     num_heads=num_heads,
                     dropout=dropout,
                     bias=False,
+                    batch_first=True,
                 )
                 for _ in range(num_layers)
             ]
