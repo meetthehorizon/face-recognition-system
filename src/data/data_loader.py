@@ -85,6 +85,7 @@ class DigiFace(Dataset):
             for img_idx in os.listdir(identity_path):
                 img_path = os.path.join(identity_path, img_idx)
                 samples.append((img_path, int(identity)))
+
         return samples
 
     def __len__(self):

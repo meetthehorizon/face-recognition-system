@@ -4,7 +4,7 @@ device: "cuda:0"
 
 #DATA SETTINGS
 data_path: ./data/raw
-num_identities: 10 #None for all identities
+num_identities: 100 #None for all identities
 train_ratio: 0.6
 val_ratio: 0.2
 test_ratio: 0.2

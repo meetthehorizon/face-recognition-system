@@ -14,6 +14,22 @@ from src.models.transformer import Transformer
 
 from src.utils.pytorch_utils import extract_landmarks_from_image
 
+from torchvision.models import mobilenet_v3_small
+
+
+class CustomMobileNetV3(nn.Module):
+    def __init__(self, num_classes=98):
+        super(CustomMobileNetV3, self).__init__()
+        self.mobilenetv3 = mobilenet_v3_small(pretrained=True)
+
+        # Modify the last layer to fit the new number of classes
+        in_features = self.mobilenetv3.classifier[-1].in_features
+        self.mobilenetv3.classifier[-1] = nn.Linear(in_features, num_classes)
+
+    def forward(self, x):
+        x = self.mobilenetv3(x)
+        return x
+
 
 class PartFVitWithLandmark(nn.Module):
     """Part-fVit with landmarks
@@ -61,7 +77,7 @@ class PartFVitWithLandmark(nn.Module):
         super().__init__()
         self.num_landmarks = num_landmarks
         self.image_size = image_size
-        self.eps = 1e-05
+        self.eps = 1e-10
         self.patch_dim = in_channels * patch_size * patch_size
         self.feat_dim = feat_dim
         self.mlp_dim = mlp_dim
@@ -78,9 +94,7 @@ class PartFVitWithLandmark(nn.Module):
             torch.randn(num_landmarks + 1, self.feat_dim)
         )  # positional embedding
 
-        self.landmark_CNN = ResNet50(
-            img_channels=in_channels, num_classes=2 * num_landmarks
-        )
+        self.landmark_CNN = CustomMobileNetV3(num_classes=2 * num_landmarks)
 
         # landmark extractor
 
