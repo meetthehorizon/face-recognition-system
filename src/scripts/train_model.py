@@ -20,7 +20,7 @@ from src.models.concat import ConcatModelWithLoss
 
 def ddp_setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "450"
+    os.environ["MASTER_PORT"] = "4500"
     os.environ["NCCL_DEBUG"] = "INFO"
     init_process_group(backend="nccl", init_method="env://")
 
@@ -33,8 +33,6 @@ class Trainer:
         optimizer,
         scheduler,
         train_loader,
-        val_loader,
-        test_loader,
         gpu_id,
         save_every,
         checkpoint_path,
@@ -45,8 +43,6 @@ class Trainer:
         self.scheduler = scheduler
 
         self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.test_loader = test_loader
 
         self.gpu_id = gpu_id
         self.save_every = save_every
@@ -65,7 +61,7 @@ class Trainer:
         self.scheduler.step()
 
     def _run_epoch(self, epoch):
-        b_sz = len(next(iter(self.train_loader))[0])
+        b_sz = len(self.train_loader)
         print(
             f"[GPU {self.gpu_id}] | Epoch: {epoch+1} | batchsize: {b_sz} | steps: {len(self.train_loader)}"
         )
@@ -81,9 +77,9 @@ class Trainer:
     def train(self, num_epochs):
         for epoch in range(num_epochs):
             self._run_epoch(epoch)
-            if self.gpu_id == "cuda:0" and (epoch + 1) % self.save_every == 0:
+            if str(self.gpu_id) == "0" and (epoch + 1) % self.save_every == 0:
                 self._save_checkpoint(epoch)
-        if self.gpu_id == "cuda:0" and num_epochs % self.save_every != 0:
+        if str(self.gpu_id) == "0" and num_epochs % self.save_every != 0:
             self._save_checkpoint(num_epochs)
 
 
@@ -99,26 +95,12 @@ def load_train_obj(config):
     )
 
     train_data = DigiFace(path=train_path)
-    val_data = DigiFace(path=val_path)
-    test_data = DigiFace(path=test_path)
 
     train_loader = DataLoader(
         train_data,
         batch_size=config["batch_size"],
         pin_memory=True,
-        sampler=DistributedSampler(train_data),
-    )
-    val_loader = DataLoader(
-        val_data,
-        batch_size=config["batch_size"],
-        pin_memory=True,
-        sampler=DistributedSampler(val_data),
-    )
-    test_loader = DataLoader(
-        test_data,
-        batch_size=config["batch_size"],
-        pin_memory=True,
-        sampler=DistributedSampler(test_data),
+        sampler=DistributedSampler(train_data, shuffle=True),
     )
 
     part_fvit = PartFVitWithLandmark(
@@ -174,8 +156,6 @@ def load_train_obj(config):
 
     kargs = {
         "train_loader": train_loader,
-        "test_loader": test_loader,
-        "val_loader": val_loader,
         "model": model,
         "criterion": criterion,
         "optimizer": optimizer,
@@ -212,3 +192,4 @@ def start_proc(rank, world_size, config, experiment_dir):
 def main(config, experiment_dir):
     world_size = torch.cuda.device_count()
     mp.spawn(start_proc, args=(world_size, config, experiment_dir), nprocs=world_size)
+    destroy_process_group()

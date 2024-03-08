@@ -4,7 +4,7 @@ import yaml
 import sys
 import shutil
 
-import src.scripts.single_gpu as train_model
+import src.scripts.train_model as train_model
 
 
 def create_folder(experiment_name, config_file):

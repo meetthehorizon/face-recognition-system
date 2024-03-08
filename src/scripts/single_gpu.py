@@ -128,6 +128,7 @@ def load_train_obj(config):
     val_data = DigiFace(path=val_path)
     test_data = DigiFace(path=test_path)
 
+
     train_loader = DataLoader(train_data, batch_size=config["batch_size"], shuffle=True)
     val_loader = DataLoader(val_data, batch_size=config["batch_size"], shuffle=True)
     test_loader = DataLoader(test_data, batch_size=config["batch_size"], shuffle=True)

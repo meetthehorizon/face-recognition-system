@@ -1,6 +1,6 @@
 #GENERAL SETTINGS
 experiment_name: train_from_scratch
-device: "cuda:0"
+device: "cpu"
 
 #DATA SETTINGS
 data_path: ./data/raw
